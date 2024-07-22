@@ -1,5 +1,6 @@
 import { sql } from "@vercel/postgres";
 import {
+  Customer,
   CustomerField,
   CustomersTableType,
   InvoiceForm,
@@ -105,7 +106,7 @@ export async function fetchCardData() {
   }
 }
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 10;
 export async function fetchFilteredInvoices(
   query: string,
   currentPage: number
@@ -137,18 +138,20 @@ export async function fetchFilteredInvoices(
 
 export async function fetchInvoicesPages(query: string) {
   try {
-    const count = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
-  `;
+    const res = await fetch(`${process.env.API_URL}/invoices_count?query=${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    if (!res.ok) {
+      throw new Error(`Error: ${res.status}`);
+    }
+    
+    const data = await res.json();
+
+    const totalPages = Math.ceil(Number(data) / ITEMS_PER_PAGE);
     return totalPages;
   } catch (error) {
     console.error("Database Error:", error);
@@ -183,15 +186,14 @@ export async function fetchInvoiceById(id: string) {
 
 export async function fetchCustomers() {
   try {
-    const data = await sql<CustomerField>`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `;
+    const res = await fetch(`${process.env.API_URL}/customers`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    const customers = data.rows;
+    const customers : Customer[] = await res.json();
     return customers;
   } catch (err) {
     console.error("Database Error:", err);

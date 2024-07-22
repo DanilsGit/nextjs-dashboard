@@ -20,7 +20,7 @@ export default function Search({ placeholder }: { placeholder: string }) {
     }else{
       params.delete('query');
     }
-
+    params.set('currentPage', '1');
     replace(`${pathname}?${params.toString()}`);
     
   }

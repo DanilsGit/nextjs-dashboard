@@ -9,8 +9,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-      className={`${montserrat.className}`}
-      >{children}</body>
+      className={`${montserrat.className}
+      `}
+      style={{ overflow: 'hidden' }}
+      >{children}</body> 
     </html>
   );
 }
